@@ -544,8 +544,7 @@ completion candidates."
 With a prefix argument or when `--follow' is part of
 `magit-log-arguments', then follow renames."
   (interactive "P")
-  (-if-let (file (or (buffer-file-name (buffer-base-buffer))
-                     magit-buffer-file-name))
+  (-if-let (file (magit-buffer-file-name))
       (magit-mode-setup magit-log-buffer-name-format nil
                         #'magit-log-mode
                         #'magit-log-refresh-buffer

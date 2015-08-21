@@ -363,6 +363,11 @@ a bare repositories."
 (put 'magit-buffer-refname   'permanent-local t)
 (put 'magit-buffer-file-name 'permanent-local t)
 
+(defun magit-buffer-file-name (&optional buffer)
+  (with-current-buffer (or buffer (current-buffer))
+    (or (buffer-file-name (buffer-base-buffer))
+        magit-buffer-file-name)))
+
 (defun magit-file-relative-name (&optional file tracked)
   "Return the path of FILE relative to the repository root.
 
