@@ -2132,7 +2132,7 @@ With prefix argument simply read a directory name using
 
 ;;;; Various
 
-(defun magit-copy-as-kill ()
+(defun magit-copy-section-value ()
   "Save the value of the current section to the kill ring.
 For commits save the full hash.  For branches do so only when
 a prefix argument is used, otherwise save the branch name.
@@ -2154,7 +2154,7 @@ When the region is active, then behave like `kill-ring-save'."
                          (setq value (magit-rev-parse value)))))
       (kill-new (message "%s" value)))))
 
-(defun magit-copy-buffer-thing-as-kill ()
+(defun magit-copy-buffer-value ()
   "Save the thing displayed in the current buffer to the kill ring.
 When the region is active, then behave like `kill-ring-save'."
   (interactive)
@@ -2176,7 +2176,7 @@ When the region is active, then behave like `kill-ring-save'."
                        (or (magit-get-current-branch) "HEAD"))
                       ((derived-mode-p 'magit-stashes-mode)
                        "refs/stash")
-                      (t (magit-copy-as-kill)))
+                      (t (magit-copy-section-value)))
       (kill-new (message "%s" it)))))
 
 ;;; magit.el ends soon
