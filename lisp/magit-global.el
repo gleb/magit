@@ -9,6 +9,28 @@
                                             files-with-prefix)
   (if current-prefix-arg
       (my-magit-s-to-args-and-files
+       ;; TODO: what we want here ideally is a full-blown completion
+       ;; on git options, their arguments, and files.  Like bash
+       ;; completion.  Or like p4-read-arg-string completion for p4
+       ;;
+       ;; To start with just filename completion would do, and you'd think
+       ;; that read-shell-command would work well enought here, but it
+       ;; doesn't.  Doesn't want to complete files unless the string
+       ;; in the minibuffer starts with something special like 'make'
+       ;; for example.
+       ;;
+       ;; To roll our own MVP all that's needed is the right
+       ;; completion function to use in completing read.  Something
+       ;; like read-file-name-internal but that can handle other text
+       ;; before the filename. You'd think it would be simple, but
+       ;; it's currely beyond me.
+       ;;
+       ;;   (completing-read "git log: "
+       ;;   'completion-function-to-be-written nil nil "initial input"
+       ;;   'my-magit-history-variable)
+       ;;
+       ;; So, for now let's use p4-read-arg-string where filename
+       ;; completion does work
        (p4-read-arg-string prompt
                            (my-magit-args-and-files-to-s
                             args files-with-prefix)))
