@@ -32,9 +32,8 @@
       magit-buffer-file-name
       default-directory))
 
-;; TODO: start using split-string-and-unquote
 (defun my-magit-s-to-args-and-files (str)
-  (let* ((tokens (p4-make-list-from-string str))
+  (let* ((tokens (split-string-and-unquote str))
          (args (--take-while (not (equal it "--")) tokens))
          (files (cdr (--drop-while (not (equal it "--")) tokens))))
     (list args files)))
@@ -46,13 +45,30 @@
 (my-magit-s-to-args-and-files "")
 (my-magit-s-to-args-and-files "--")
 (my-magit-s-to-args-and-files "-- ./myfile.txt")
+;; quotes and escaping
+;; basic quoting to deal with spaces
+(my-magit-s-to-args-and-files "--all -S\"find me\"")
+;; this is how you represent a " character, needs both quoting and
+;; escaping
+(my-magit-s-to-args-and-files "\"foo\\\"bar\"")
+;; double quotes can be escaped, but only within double quotes
+;; (my-magit-s-to-args-and-files "foo\\\"bar")  ; error
+;; single quotes are not supported/special
+(my-magit-s-to-args-and-files "'single quote' \"'foo\"")
+;; space cannot be escaped, only quotes can be escaped
+(my-magit-s-to-args-and-files "escaped\\ space")
+;; unbalanced quotes are bad
+;; this results in error "End of file during parsing
+;; (my-magit-s-to-args-and-files "unbalanced\"quote")
+;; escape characters by themselves are not treated specially
+(my-magit-s-to-args-and-files "\\ \\")
+
+
 
 (defun my-magit-args-and-files-to-s (args files)
-  ;; TODO: combine-and-quote-strings or shell-quote-argument
-  (mapconcat 'identity
-             ;; last empty string to get trailing space
-             (append args '("--") files '(""))
-             " "))
+  ;; last empty string to get trailing space for filename completion
+  ;; to work at point right away
+  (combine-and-quote-strings (append args '("--") files '(""))))
 ;; tests
 (my-magit-args-and-files-to-s '("--all" "--graph")
                               '("./myfile.txt" "./foo/file.txt"))
@@ -60,6 +76,11 @@
 (my-magit-args-and-files-to-s '("--all" "--graph") nil)
 (my-magit-args-and-files-to-s nil nil)
 (my-magit-args-and-files-to-s nil '("./myfile.txt" "./foo/file.txt"))
+;; things needing quoting
+(my-magit-args-and-files-to-s '("-S" "with space" "'single'" "\"double\"") nil)
+(my-magit-args-and-files-to-s nil '("file with space" "\\" "'" "\""))
+(my-magit-args-and-files-to-s nil '("\""))
+(my-magit-args-and-files-to-s nil '("\\"))
 
 
 
