@@ -13,11 +13,12 @@
        ;; on git options, their arguments, and files.  Like bash
        ;; completion.  Or like p4-read-arg-string completion for p4
        ;;
-       ;; To start with just filename completion would do, and you'd think
-       ;; that read-shell-command would work well enought here, but it
-       ;; doesn't.  Doesn't want to complete files unless the string
-       ;; in the minibuffer starts with something special like 'make'
-       ;; for example.
+       ;; To start with just filename completion would do, and you'd
+       ;; think that read-shell-command would work well here, but it
+       ;; doesn't.  Doesn't want to complete files after space unless
+       ;; the string in the minibuffer starts with something special
+       ;; like 'make' for example.  But once you type something like
+       ;; ./ it does work.
        ;;
        ;; To roll our own MVP all that's needed is the right
        ;; completion function to use in completing read.  Something
@@ -29,11 +30,14 @@
        ;;   'completion-function-to-be-written nil nil "initial input"
        ;;   'my-magit-history-variable)
        ;;
-       ;; So, for now let's use p4-read-arg-string where filename
-       ;; completion does work
-       (p4-read-arg-string prompt
-                           (my-magit-args-and-files-to-s
-                            args files-with-prefix)))
+       ;; So, for now let's use p4-read-arg-string if available, and
+       ;; fallback to read-shell-command otherwise.
+       (if (functionp 'p4-read-arg-string)
+           (p4-read-arg-string prompt
+                               (my-magit-args-and-files-to-s
+                                args files-with-prefix))
+         (read-shell-command prompt (my-magit-args-and-files-to-s
+                                args files-with-prefix))))
     (list args files-no-prefix)))
 
 
