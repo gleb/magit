@@ -48,6 +48,9 @@
                 (-if-let (f (my-magit-context-single-filename))
                     (list (expand-file-name f)) nil)
                 nil))
+  ;; TODO: something somewhere is messing with current directory, so
+  ;; need to pass absolute file paths to git
+  (setq files (mapcar 'expand-file-name files))
   (magit-log-all args files))
 (global-set-key [(control x) (g) (l)] 'my-magit-log)
 
@@ -119,6 +122,9 @@
                 (-if-let (f (my-magit-context-single-filename))
                     (list (expand-file-name f)) nil)
                 nil))
+  ;; TODO: something somewhere is messing with current directory, so
+  ;; need to pass absolute file paths to git
+  (setq files (mapcar 'expand-file-name files))
   (magit-mode-setup magit-diff-buffer-name-format
                     magit-diff-switch-buffer-function
                     #'magit-status-mode
