@@ -73,12 +73,12 @@
          (buf (get-buffer-create "*magit-opened*")))
     (magit-mode-setup buf nil
                       #'magit-status-mode 
-                      #'magit-global-refresh-opened-buffer)
+                      #'magit-global-opened-refresh-buffer)
     (with-current-buffer buf
       (goto-char (point-min))
       (forward-line))
     ))
-(defun magit-global-refresh-opened-buffer ()
+(defun magit-global-opened-refresh-buffer ()
   (magit-insert-unstaged-changes))
 
 
