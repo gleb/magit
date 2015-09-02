@@ -179,3 +179,9 @@
 
 
 (provide 'magit-global)
+
+
+;; TODO
+;; * usability: git rebase -i with unstaged changes - should say
+;;   what's wrong in echo area
+;; * bug: do -diff in a file not under git - still opens the window
