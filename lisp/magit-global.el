@@ -12,9 +12,7 @@
   (interactive (magit-global-read-args-and-files
                 "git log: "
                 magit-log-arguments
-                (-if-let (f (magit-global-context-single-filename))
-                    (list (expand-file-name f)) nil)
-                nil))
+                (magit-global-current-files) nil))
   ;; TODO: something somewhere is messing with current directory, so
   ;; need to pass absolute file paths to git
   (setq files (mapcar 'expand-file-name files))
@@ -25,9 +23,7 @@
   (interactive (magit-global-read-args-and-files
                 "git diff: "
                 magit-diff-arguments
-                (-if-let (f (magit-global-context-single-filename))
-                    (list (expand-file-name f)) nil)
-                nil))
+                (magit-global-current-files) nil))
   ;; TODO: something somewhere is messing with current directory, so
   ;; need to pass absolute file paths to git
   (setq files (mapcar 'expand-file-name files))
@@ -82,11 +78,16 @@
   (magit-insert-unstaged-changes))
 
 
-(defun magit-global-context-single-filename ()
+(defun magit-global-current-files ()
+  "Determine or guess current file.  Return as a list"
   ;; next 2 lines from magit-log-buffer-file
-  (or (buffer-file-name (buffer-base-buffer))
-      magit-buffer-file-name
-      default-directory))
+  (-if-let (current-file (or
+                          ;; next 2 lines from magit-log-buffer-file
+                          (buffer-file-name (buffer-base-buffer))
+                          magit-buffer-file-name
+                          default-directory))
+      (list current-file)
+    nil))
 
 
 (defun magit-global-read-args-and-files (prompt &optional args
