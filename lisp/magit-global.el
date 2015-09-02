@@ -128,7 +128,13 @@
   (magit-mode-setup magit-diff-buffer-name-format
                     magit-diff-switch-buffer-function
                     #'magit-status-mode
-                    #'my-magit-diff-refresh-buffer args files))
+                    #'my-magit-diff-refresh-buffer args files)
+  ;; TODO: this is a hack, this funtionality logically belongs in
+  ;; magit-mode-setup.  Shouldn't invoke switch-buffer-function under
+  ;; some conditions.
+  (if (zerop (buffer-size))
+      (progn (quit-window)
+             (message "No changes unstaged or staged"))))
 (defun my-magit-diff-refresh-buffer (args files)
   ;; note that magit-diff-section-arguments must be included for -/+
   ;; to work in magit-status-mode
