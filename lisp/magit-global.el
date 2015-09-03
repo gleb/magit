@@ -181,6 +181,10 @@
 
 
 ;; TODO
-;; * usability: git rebase -i with unstaged changes - should say
+;; * USABILITY: git rebase -i with unstaged changes - should say
 ;;   what's wrong in echo area
-;; * bug: do -diff in a file not under git - still opens the window
+;; * BUG: do -diff in a file not under git - still opens the window
+;; * FEATURE: git add a file
+;; * BUG: in magit calling save-some-buffers messages "(No buffers
+;;   need saving)" which is annoying.  Separately, magit tries to
+;;   auto-save way to offten
