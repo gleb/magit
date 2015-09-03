@@ -5,7 +5,7 @@
 (global-set-key [(control x) (g) ($)] 'magit-process)
 (global-set-key [(control x) (g) (l)] 'magit-global-log)
 (global-set-key [(control x) (g) (=)] 'magit-global-diff)
-(global-set-key [(control x) (g) (-)] 'magit-ediff-show-unstaged)
+(global-set-key [(control x) (g) (-)] 'magit-global-ediff)
 (global-set-key [(control x) (g) (o)] 'magit-global-opened)
 (global-set-key [(control x) (g) (a)] 'magit-global-add)
 (global-set-key [(control x) (g) (u)] 'magit-global-revert)
@@ -57,6 +57,13 @@
         "--no-prefix" (and magit-diff-show-diffstat "--stat")
         "--" files))
     (magit-section-show-level-4-all)))
+
+
+;; TODO: this is a stub
+(defun magit-global-ediff ()
+  (interactive)
+  ;; doesn't work without call-interactively
+  (call-interactively 'magit-ediff-show-unstaged))
 
 
 ;; equivalent to p4-opened
