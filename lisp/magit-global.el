@@ -4,8 +4,8 @@
 (global-set-key [(control x) (g) ($)] 'magit-process)
 (global-set-key [(control x) (g) (l)] 'magit-global-log)
 (global-set-key [(control x) (g) (=)] 'magit-global-diff)
-(global-set-key [(control x) (g) (s)] 'magit-global-stage)
 (global-set-key [(control x) (g) (o)] 'magit-global-opened)
+(global-set-key [(control x) (g) (a)] 'magit-global-add)
 
 
 (defun magit-global-log (&optional args files)
@@ -56,12 +56,6 @@
     (magit-section-show-level-4-all)))
 
 
-(defun magit-global-stage ()
-  (interactive)
-  (magit-stage-item buffer-file-name)
-  (message "Staged"))
-
-
 ;; equivalent to p4-opened
 (defun magit-global-opened ()
   (interactive)
@@ -76,6 +70,45 @@
     ))
 (defun magit-global-opened-refresh-buffer ()
   (magit-insert-unstaged-changes))
+
+;; TODO: not using this function yet.  Not sure if this is the right
+;; interface.  Also see vc-git-register
+(defun magit-global-add (&optional args files)
+  (interactive (magit-global-read-args-and-files
+                "git add: "
+                '("--intent-to-add")
+                (magit-global-current-files) nil))
+  (interactive)
+  ;; TODO: something somewhere is messing with current directory, so
+  ;; need to pass absolute file paths to git
+  (setq files (mapcar 'expand-file-name files))
+  (magit-stage-1 args files)
+  ;; TODO: probably want to message something
+  )
+;;  (message "Staged"))
+
+;; TODO: defun magit-global-revert like vc-revert
+
+;; TODO: still not using this function.  Compared to C-x v v is is
+;; awful chatty if I just want to commit this one file right now.
+;; Compared magit-commit-popup it lacks useful functionality like
+;; rewording
+(defun magit-global-commit (&optional args files)
+  (interactive (magit-global-read-args-and-files
+                "git log: "
+                magit-commit-arguments
+                (magit-global-current-files) nil))
+  ;; TODO: append args and files because magit-commit has different
+  ;; signature.  It probably shouldn't.
+  (magit-commit (append args '("--") files))
+  ;; TODO: modify magit-commit-diff and add `magit-global-commit there
+  ;; to see diffs in a window popup here
+  ;;
+  ;; TODO: to use this with any comfort on one file need to see that
+  ;; file more prominently in the commit message buffer.  Also need to
+  ;; test if the code inserting comment into that buffer obeys file
+  ;; restrictions if passed
+  )
 
 
 (defun magit-global-current-files ()
