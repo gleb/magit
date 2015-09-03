@@ -241,3 +241,6 @@
 ;;   auto-save way to offten
 ;; * BUG: magit-ediff-show-unstaged should kill buffers/windows based
 ;;   on buffer name, not position (reproduce with ~)
+;; * SAFETY: commit from diff restricted to files, should pass files
+;;   to commit-popup (although can see what's being commited in the
+;;   comment)
