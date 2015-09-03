@@ -244,3 +244,5 @@
 ;; * SAFETY: commit from diff restricted to files, should pass files
 ;;   to commit-popup (although can see what's being commited in the
 ;;   comment)
+;; * TODO: buffer name is wrong for diff buffers
+
