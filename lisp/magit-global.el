@@ -60,18 +60,28 @@
 
 ;; equivalent to p4-opened
 (defun magit-global-opened ()
+  "Meant to function like bs-show (fancier list-buffers) but for
+  modified  files."
   (interactive)
-  (let* ((dir default-directory)
-         (buf (get-buffer-create "*magit-opened*")))
-    (magit-mode-setup buf nil
-                      #'magit-status-mode 
-                      #'magit-global-opened-refresh-buffer)
-    (with-current-buffer buf
+  (magit-mode-setup "*magit-opened*" nil
+                    #'magit-status-mode 
+                    #'magit-global-opened-refresh-buffer)
+  (if (zerop (buffer-size))
+      (progn (quit-window)
+             (message "No modified files"))
+    (progn
+      ;; position on the first file
       (goto-char (point-min))
-      (forward-line))
-    ))
+      (forward-line)))
+  ;; TODO:
+  ;; * want to avoid highlighting of section headers when point is on
+  ;;   them
+  ;; * want to quit-window when a file is selected with Enter
+  )
 (defun magit-global-opened-refresh-buffer ()
-  (magit-insert-unstaged-changes))
+  (magit-insert-section (status)
+    (magit-insert-unstaged-changes)
+    (magit-insert-staged-changes)))
 
 ;; TODO: not using this function yet.  Not sure if this is the right
 ;; interface.  Also see vc-git-register
