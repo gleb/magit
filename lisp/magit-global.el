@@ -8,7 +8,7 @@
 (global-set-key [(control x) (g) (-)] 'magit-ediff-show-unstaged)
 (global-set-key [(control x) (g) (o)] 'magit-global-opened)
 (global-set-key [(control x) (g) (a)] 'magit-global-add)
-(global-set-key [(control x) (g) (u)] 'vc-revert) ; for now
+(global-set-key [(control x) (g) (u)] 'magit-global-revert)
 
 
 (defun magit-global-log (&optional args files)
@@ -100,7 +100,12 @@
   )
 ;;  (message "Staged"))
 
-;; TODO: defun magit-global-revert like vc-revert
+
+;; TODO: this is a stub
+(defun magit-global-revert ()
+  (interactive)
+  (vc-revert))
+
 
 ;; TODO: still not using this function.  Compared to C-x v v is is
 ;; awful chatty if I just want to commit this one file right now.

@@ -140,6 +140,7 @@ and then turned on again when turning off the latter."
 (defvar-local magit-blame-recursive-p nil)
 (defvar-local magit-blame-separator nil)
 
+;; comment
 (define-minor-mode magit-blame-mode
   "Display blame information inline."
   :lighter magit-blame-mode-lighter
@@ -171,7 +172,7 @@ and then turned on again when turning off the latter."
                  (delete-overlay ov))))))))
 
 (defadvice auto-revert-handler (around magit-blame activate)
-  "If Magit-Blame mode is on, then do nothing.
+  "If Magit-Blame mode is on, then do nothing.  More info.
 See #1731."
   (unless magit-blame-mode
     ad-do-it))
