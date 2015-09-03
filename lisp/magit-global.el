@@ -93,6 +93,9 @@
 ;; awful chatty if I just want to commit this one file right now.
 ;; Compared magit-commit-popup it lacks useful functionality like
 ;; rewording
+;;
+;; TODO: when doing completion here can limit to files with changes
+;; (and directories?)
 (defun magit-global-commit (&optional args files)
   (interactive (magit-global-read-args-and-files
                 "git log: "
@@ -214,6 +217,8 @@
 
 
 ;; TODO
+;; * REFACTOR: adjust to "call magit-mode-get-buffer with nil as FORMAT"
+;;   https://github.com/magit/magit/commit/ce2f4f90d1267ccf87197dce45d357919103c8d3
 ;; * USABILITY: git rebase -i with unstaged changes - should say
 ;;   what's wrong in echo area
 ;; * BUG: do -diff in a file not under git - still opens the window
@@ -221,3 +226,5 @@
 ;; * BUG: in magit calling save-some-buffers messages "(No buffers
 ;;   need saving)" which is annoying.  Separately, magit tries to
 ;;   auto-save way to offten
+;; * BUG: magit-ediff-show-unstaged should kill buffers/windows based
+;;   on buffer name, not position (reproduce with ~)
