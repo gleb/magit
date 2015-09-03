@@ -4,8 +4,10 @@
 (global-set-key [(control x) (g) ($)] 'magit-process)
 (global-set-key [(control x) (g) (l)] 'magit-global-log)
 (global-set-key [(control x) (g) (=)] 'magit-global-diff)
+(global-set-key [(control x) (g) (-)] 'magit-ediff-show-unstaged)
 (global-set-key [(control x) (g) (o)] 'magit-global-opened)
 (global-set-key [(control x) (g) (a)] 'magit-global-add)
+(global-set-key [(control x) (g) (u)] 'vc-revert) ; for now
 
 
 (defun magit-global-log (&optional args files)
