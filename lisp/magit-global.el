@@ -1,4 +1,5 @@
 ;; using magit from other buffers
+(global-set-key [(control x) (g)] nil)
 (global-set-key [(control x) (g) (g)] 'magit-status)
 (global-set-key [(control x) (g) (c)] 'magit-commit-popup)
 (global-set-key [(control x) (g) ($)] 'magit-process)
