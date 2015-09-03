@@ -1,7 +1,6 @@
 ;; using magit from other buffers
 (global-set-key [(control x) (g)] nil)
 (global-set-key [(control x) (g) (g)] 'magit-status)
-(global-set-key [(control x) (g) (c)] 'magit-commit-popup)
 (global-set-key [(control x) (g) ($)] 'magit-process)
 (global-set-key [(control x) (g) (l)] 'magit-global-log)
 (global-set-key [(control x) (g) (=)] 'magit-global-diff)
@@ -9,6 +8,7 @@
 (global-set-key [(control x) (g) (o)] 'magit-global-opened)
 (global-set-key [(control x) (g) (a)] 'magit-global-add)
 (global-set-key [(control x) (g) (u)] 'magit-global-revert)
+(global-set-key [(control x) (g) (c)] 'magit-commit-popup)
 
 
 (defun magit-global-log (&optional args files)
