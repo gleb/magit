@@ -8,7 +8,7 @@
 (global-set-key [(control x) (g) (o)] 'magit-global-opened)
 (global-set-key [(control x) (g) (a)] 'magit-global-add)
 (global-set-key [(control x) (g) (u)] 'magit-global-revert)
-(global-set-key [(control x) (g) (c)] 'magit-commit-popup)
+(global-set-key [(control x) (g) (c)] 'magit-global-commit)
 
 
 (defun magit-global-log (&optional args files)
@@ -114,21 +114,27 @@
   (vc-revert))
 
 
-;; TODO: still not using this function.  Compared to C-x v v is is
-;; awful chatty if I just want to commit this one file right now.
-;; Compared magit-commit-popup it lacks useful functionality like
-;; rewording
-;;
-;; TODO: when doing completion here can limit to files with changes
-;; (and directories?)
+;; The ideal use case for this one is as a replacement for C-x v v to
+;; quickly commit current file.
 (defun magit-global-commit (&optional args files)
+  ;; TODO: when doing completion for commit could limit files to files
+  ;; with changes (and directories?)
   (interactive (magit-global-read-args-and-files
-                "git log: "
+                "git commit: "
                 magit-commit-arguments
                 (magit-global-current-files) nil))
+  ;; TODO: want to be able to pass args and files to the popup
+  (magit-commit-popup)
+  ;; Alterternative implementation that can accept args and files would be
+  ;;
+  ;;   (magit-commit (append args '("--") files))
+  ;;
+  ;; Compared magit-commit-popup it lacks useful functionality like
+  ;; rewording.
+  ;;
   ;; TODO: append args and files because magit-commit has different
   ;; signature.  It probably shouldn't.
-  (magit-commit (append args '("--") files))
+  ;;
   ;; TODO: modify magit-commit-diff and add `magit-global-commit there
   ;; to see diffs in a window popup here
   ;;
