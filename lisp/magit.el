@@ -2132,10 +2132,63 @@ With prefix argument simply read a directory name using
 
 ;;;; Various
 
+(defvar magit-revision-stack nil)
+
+(defvar magit-pop-revision-stack-format
+  '("[%N] %h" "%N: %H\n    %aN <%aE>\n    %s\n"))
+
+(defun magit-pop-revision-stack ()
+  "Insert a representation of a revision into the current buffer.
+
+Pop a revision from the `magit-revision-stack' and insert it into
+the current buffer according to `magit-pop-revision-stack-format'.
+Revisions can be put on the stack using `magit-copy-section-value'
+and `magit-copy-buffer-value'.
+
+If the stack is empty or with a prefix argument instead read an
+revision in the minibuffer.  By using the minibuffer history this
+allows selecting an item which was popped earlier.  Additionally
+it is possible to
+
+
+"
+  (interactive)
+  (--if-let (pop magit-revision-stack)
+      (let ((rev (car it))
+            (default-directory (cadr it))
+            (pnt-format (car  magit-pop-revision-stack-format))
+            (eob-format (cadr magit-pop-revision-stack-format)))
+        (when (string-match-p "%N" pnt-format)
+          (let ((n (save-excursion
+                     (if (re-search-backward ".\\[\\([0-9]+\\)\\]" nil t)
+                         (number-to-string
+                          (1+ (string-to-number (match-string 1))))
+                       "1"))))
+            (setq pnt-format (replace-regexp-in-string "%N" n pnt-format t t))
+            (when eob-format
+              (setq eob-format
+                    (replace-regexp-in-string "%N" n eob-format t t)))))
+        (magit-rev-insert-format pnt-format rev)
+        (backward-delete-char 1)
+        (when eob-format
+          (save-excursion
+            (goto-char (point-max))
+            (when comment-start
+              (while (re-search-backward (concat "^" comment-start) nil t)))
+            (magit-rev-insert-format eob-format rev)
+            (backward-delete-char 1)
+            (when (and comment-start (looking-at (concat "^" comment-start)))
+              (insert "\n")))))
+    (message "Revision stack is empty")))
+
 (defun magit-copy-section-value ()
   "Save the value of the current section to the kill ring.
+The value of the section is a short representation of what the
+section represents in a longer form.
+
 For commits save the full hash.  For branches do so only when
 a prefix argument is used, otherwise save the branch name.
+
 When the region is active, then behave like `kill-ring-save'."
   (interactive)
   (if (region-active-p)
@@ -2143,41 +2196,57 @@ When the region is active, then behave like `kill-ring-save'."
     (-when-let* ((section (magit-current-section))
                  (value (magit-section-value section)))
       (magit-section-case
-        (branch (when current-prefix-arg
-                  (setq value (magit-rev-parse value))))
-        (commit (setq value (magit-rev-parse value)))
-        (module-commit (let ((default-directory
-                               (file-name-as-directory
-                                (expand-file-name
-                                 (magit-section-parent-value section)
-                                 (magit-toplevel)))))
-                         (setq value (magit-rev-parse value)))))
-      (kill-new (message "%s" value)))))
+        ((branch commit module-commit)
+         (let ((default-directory default-directory) branch)
+           (magit-section-case
+             (branch (when current-prefix-arg (setq branch value)))
+             (module-commit
+              (setq default-directory
+                    (file-name-as-directory
+                     (expand-file-name (magit-section-parent-value section)
+                                       (magit-toplevel))))))
+           (setq value (magit-rev-parse value))
+           (push (list value default-directory) magit-revision-stack)
+           (kill-new (message "%s" (or branch value)))))
+        (t (kill-new (message "%s" value)))))))
 
 (defun magit-copy-buffer-value ()
-  "Save the thing displayed in the current buffer to the kill ring.
+  "Save the value of the current buffer to the kill ring.
+The value of the buffer is a short representation of what the
+buffer represents in a longer form.
+
+For commits save the full hash.  For branches do so only when
+a prefix argument is used, otherwise save the branch name.
+
 When the region is active, then behave like `kill-ring-save'."
   (interactive)
   (if (region-active-p)
       (copy-region-as-kill (mark) (point) 'region)
-    (--when-let (cond ((derived-mode-p 'magit-revision-mode)
-                       (magit-rev-parse (car magit-refresh-args)))
-                      ((derived-mode-p 'magit-diff-mode
-                                       'magit-cherry-mode
-                                       'magit-reflog-mode
-                                       'magit-refs-mode
-                                       'magit-stash-mode)
-                       (car magit-refresh-args))
-                      ((derived-mode-p 'magit-log-mode)
-                       (if magit-log-select-pick-function
-                           (car magit-refresh-args)
-                         (cadr magit-refresh-args)))
-                      ((derived-mode-p 'magit-status-mode)
-                       (or (magit-get-current-branch) "HEAD"))
-                      ((derived-mode-p 'magit-stashes-mode)
-                       "refs/stash")
-                      (t (magit-copy-section-value)))
-      (kill-new (message "%s" it)))))
+    (let (value branch)
+      (cond ((derived-mode-p 'magit-revision-mode)
+             (setq value (magit-rev-parse (car magit-refresh-args))))
+            ((derived-mode-p 'magit-diff-mode
+                             'magit-cherry-mode
+                             'magit-reflog-mode
+                             'magit-refs-mode
+                             'magit-stash-mode)
+             (setq value (car magit-refresh-args)))
+            ((derived-mode-p 'magit-log-mode)
+             (setq value (if magit-log-select-pick-function
+                             (car magit-refresh-args)
+                           (cadr magit-refresh-args)))
+             (when (and current-prefix-arg (magit-branch-p value))
+               (setq branch value)))
+            ((derived-mode-p 'magit-status-mode)
+             (setq value (magit-rev-parse "HEAD"))
+             (when current-prefix-arg
+               (setq branch (magit-get-current-branch))))
+            ((derived-mode-p 'magit-stashes-mode)
+             (setq value "refs/stash"))
+            (t
+             (magit-copy-section-value)))
+      (when value
+        (kill-new (message "%s" (or branch value)))))))
 
 ;;; magit.el ends soon
 
