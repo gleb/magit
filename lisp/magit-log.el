@@ -33,6 +33,7 @@
 (require 'magit-diff)
 
 (declare-function magit-blame-chunk-get 'magit-blame)
+(declare-function magit-find-file-noselect 'magit)
 (declare-function magit-insert-head-header 'magit)
 (declare-function magit-insert-upstream-header 'magit)
 (declare-function magit-read-file-from-rev 'magit)
@@ -953,14 +954,33 @@ another window, using `magit-show-commit'."
            magit-diff-auto-show-delay nil
            (lambda ()
              (magit-section-when commit
-               (when (or (and (magit-diff-auto-show-p 'log-follow)
-                              (magit-mode-get-buffer
-                               nil 'magit-revision-mode nil nil t))
-                         (and (magit-diff-auto-show-p 'log-oneline)
-                              (derived-mode-p 'magit-log-mode)))
-                 (apply #'magit-show-commit
-                        (magit-section-value it) it nil
-                        (magit-diff-arguments))))
+               (let ((rev (magit-section-value it)))
+                 (cond
+                  ((and (magit-diff-auto-show-p 'blob-follow)
+                        (derived-mode-p 'magit-log-mode))
+                   (let ((files (cadr (magit-log-arguments))))
+                     (when (= (length files) 1)
+                       (let ((file (car files)))
+                         (-when-let
+                             (buffer (--first (with-current-buffer it
+                                                (equal magit-buffer-file-name
+                                                       file))
+                                              (-map #'window-buffer
+                                                    (window-list))))
+                           (let ((line (with-current-buffer buffer
+                                         (line-number-at-pos)))
+                                 (buf (magit-find-file-noselect rev file)))
+                             (display-buffer buf)
+                             (with-current-buffer buf
+                               (goto-char (point-min))
+                               (forward-line line))))))))
+                  ((or (and (magit-diff-auto-show-p 'log-follow)
+                            (magit-mode-get-buffer
+                             nil 'magit-revision-mode nil nil t))
+                       (and (magit-diff-auto-show-p 'log-oneline)
+                            (derived-mode-p 'magit-log-mode)))
+                   (apply #'magit-show-commit rev it nil
+                          (magit-diff-arguments))))))
              (setq magit-update-other-window-timer nil))))))
 
 (defun magit-log-goto-same-commit ()
