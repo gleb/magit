@@ -110,11 +110,9 @@ string.  Use `identity' to forgo changing the graph."
 
 When non-nil the author name and date are initially displayed in
 the margin of log buffers.  The margin can be shown or hidden in
-the current buffer using the command `magit-toggle-margin'.
-
-When a log buffer contains a verbose log, then the margin is
-never displayed.  In status buffers this option is ignored but
-it is possible to show the margin using the mentioned command."
+the current buffer using the command `magit-toggle-margin'.  In
+status buffers this option is ignored but it is possible to show
+the margin using the mentioned command."
   :package-version '(magit . "2.1.0")
   :group 'magit-log
   :type 'boolean)
@@ -328,8 +326,8 @@ are no unpulled commits) show."
                (?L "Trace line evolution"    "-L"        magit-read-file-trace)
                ;; TODO
                (?S "Pickaxe search"          "-S"        read-from-minibuffer)
-               ;; (?F "Format"               "--format=" read-from-minibuffer)
-               )
+               (?F "Extra format"            "++format=" read-from-minibuffer)
+               (?g "Show graph"              "++graph="  read-from-minibuffer))
     :actions  ((?l "Log current"             magit-log-current)
                (?L "Log local branches"      magit-log-branches)
                (?r "Reflog current"          magit-reflog-current)
@@ -664,12 +662,9 @@ Type \\[magit-reset] to reset HEAD to the commit at point.
   (hack-dir-local-variables-non-file-buffer))
 
 (defvar magit-log-remove-graph-re
-  (concat "^" (regexp-opt '("-G" "--grep" "--follow" "-L")))
+  (concat "^" (regexp-opt '("-G" "--grep" "--follow" "-L"
+                            "--patch" "--stat")))
   "Regexp matching arguments which are not compatible with `--graph'.")
-
-(defvar magit-log-use-verbose-re
-  (concat "^" (regexp-opt '("--patch" "--stat")))
-  "Regexp matching arguments which trigger the use of verbose log.")
 
 (defun magit-log-refresh-buffer (revs args files)
   (setq header-line-format
@@ -688,21 +683,18 @@ Type \\[magit-reset] to reset HEAD to the commit at point.
 (defun magit-insert-log (revs &optional args files)
   "Insert a log section.
 Do not add this to a hook variable."
-  (let ((verbose (--any-p (string-match-p magit-log-use-verbose-re it) args)))
-    (magit-git-wash (apply-partially 'magit-log-wash-log
-                                     (if verbose 'verbose 'oneline))
-      "log" (magit-log-format-max-count)
-      (and (not verbose)
-           (format "--format=%%h%s %s[%%aN][%%at]%%s"
-                   (if (member "--decorate" args) "%d" "")
-                   (if (member "--show-signature" args)
-                       (progn (setq args (remove "--show-signature" args))
-                              "%G?")
-                     "")))
-      (if (member "--decorate" args)
-          (cons "--decorate=full" (remove "--decorate" args))
-        args)
-      "--use-mailmap" "--no-prefix" revs "--" files)))
+  (magit-git-wash #'magit-log-wash-log
+    "log" (magit-log-format-max-count)
+    (format "--format=%%h%s %s[%%aN][%%at]%%s"
+            (if (member "--decorate" args) "%d" "")
+            (if (member "--show-signature" args)
+                (progn (setq args (remove "--show-signature" args))
+                       "%G?")
+              ""))
+    (if (member "--decorate" args)
+        (cons "--decorate=full" (remove "--decorate" args))
+      args)
+    "--use-mailmap" "--no-prefix" revs "--" files))
 
 (defvar magit-commit-section-map
   (let ((map (make-sparse-keymap)))
@@ -718,7 +710,7 @@ Do not add this to a hook variable."
     map)
   "Keymap for `module-commit' sections.")
 
-(defconst magit-log-oneline-re
+(defconst magit-log-heading-re
   (concat "^"
           "\\(?4:[-_/|\\*o. ]*\\)"                 ; graph
           "\\(?1:[0-9a-fA-F]+\\) "                 ; sha1
@@ -773,12 +765,6 @@ Do not add this to a hook variable."
           "\\(?6:[^ ]+\\) "                        ; date
           "\\(?2:.*\\)$"))                         ; msg
 
-(defconst magit-log-verbose-re
-  (concat "^"
-          "\\(\\(?:[-_/|\\*o.] *\\)+ *\\)?"
-          "commit \\([0-9a-fA-F]+\\)"
-          "\\(?: \\(([^()]+)\\)\\)?"))
-
 (defvar magit-log-count nil)
 
 (defun magit-log-format-max-count ()
@@ -798,10 +784,7 @@ Do not add this to a hook variable."
     (reverse-region (point-min) (point-max)))
   (let ((magit-log-count 0)
         (abbrev (magit-abbrev-length)))
-    (magit-wash-sequence
-     (if (eq style 'verbose)
-         (apply-partially 'magit-log-wash-verbose abbrev)
-       (apply-partially 'magit-log-wash-line style abbrev)))
+    (magit-wash-sequence (apply-partially 'magit-log-wash-line style abbrev))
     (if (derived-mode-p 'magit-log-mode)
         (when (= magit-log-count magit-log-cutoff-length)
           (magit-insert-section (longer)
@@ -821,7 +804,7 @@ Do not add this to a hook variable."
   (when (derived-mode-p 'magit-log-mode)
     (cl-incf magit-log-count))
   (looking-at (pcase style
-                (`oneline    magit-log-oneline-re)
+                (nil         magit-log-heading-re)
                 (`cherry     magit-log-cherry-re)
                 (`module     magit-log-module-re)
                 (`reflog     magit-log-reflog-re)
@@ -869,38 +852,25 @@ Do not add this to a hook variable."
       (when (and refs magit-log-show-refname-after-summary)
         (insert ?\s)
         (magit-insert (magit-format-ref-labels refs)))
-      (when (memq style '(oneline reflog stash))
+      (when (memq style '(nil reflog stash))
         (goto-char (line-beginning-position))
         (magit-format-log-margin author date))
       (when (looking-at "^\n")
         (delete-char 1)
-        (when (and (eq style 'oneline) (looking-at "^diff"))
+        (when (and (not style) (looking-at "^diff"))
           (magit-insert-heading)
           (when (re-search-forward magit-diff-headline-re nil t)
             (goto-char (line-beginning-position))
-            (magit-wash-sequence (apply-partially 'magit-diff-wash-diff
-                                                  nil))))))) ; TODO what arguments?
-  (when (eq style 'oneline)
+            ;; TODO what arguments?
+            ;; (magit-wash-sequence (apply-partially 'magit-diff-wash-diff nil))
+            (magit-diff-wash-diffs (list "--stat"))
+            )))))
+  (unless style
     (let ((align (make-string (1+ abbrev) ? )))
-      (while (and (not (eobp)) (not (looking-at magit-log-oneline-re)))
+      (while (and (not (eobp)) (not (looking-at magit-log-heading-re)))
         (insert align)
         (goto-char (line-beginning-position))
         (magit-format-log-margin)
-        (forward-line))))
-  t)
-
-(defun magit-log-wash-verbose (abbrev)
-  (cl-incf magit-log-count)
-  (looking-at magit-log-verbose-re)
-  (magit-bind-match-strings (graph hash refs) nil
-    (magit-delete-match)
-    (magit-insert-section (commit hash)
-      (when graph (insert graph))
-      (when refs
-        (magit-insert (magit-format-ref-labels refs) nil ?\s))
-      (magit-insert hash 'magit-hash ?\s)
-      (forward-line)
-      (while (and (not (eobp)) (not (looking-at magit-log-verbose-re)))
         (forward-line))))
   t)
 
@@ -1347,17 +1317,10 @@ These sections can be expanded to show the respective commits."
   (interactive)
   (unless (derived-mode-p 'magit-log-mode 'magit-status-mode 'magit-refs-mode)
     (user-error "Buffer doesn't contain any logs"))
-  (when (and (derived-mode-p 'magit-log-mode)
-             (eq (car magit-refresh-args) 'verbose))
-    (user-error "Log margin is redundant when showing verbose logs"))
   (magit-set-buffer-margin (not (cdr (window-margins)))))
 
 (defun magit-set-buffer-margin (enable)
-  (let ((width (and enable
-                    (if (and (derived-mode-p 'magit-log-mode)
-                             (eq (car magit-refresh-args) 'verbose))
-                        0 ; temporarily hide redundant margin
-                      (car magit-log-margin-spec)))))
+  (let ((width (and enable (car magit-log-margin-spec))))
     (setq magit-show-margin width)
     (when (and enable magit-set-buffer-margin-refresh)
       (magit-refresh))
